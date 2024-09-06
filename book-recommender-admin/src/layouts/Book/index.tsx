@@ -148,6 +148,134 @@ const BookLayout = ({ navigate, location }: any) => {
     }
   }, [])
 
+  const deleteBook = useCallback(
+    async (rowData?: { [key: string]: any }) => {
+      try {
+        if (rowData) {
+          const { id } = rowData
+          await BookApi.deleteBookById(id)
+          toast.success('A book is deleted successfully!')
+          if (totalItemsOnCurrentPage === 1 && currentPage > 1) {
+            setCurrentPage((prevPage) => prevPage - 1)
+          }
+          setUpdate((prev) => !prev)
+          setIsDeleteDialogOpen(false)
+        }
+      } catch (err: any) {
+        toast.error(err?.message)
+      }
+    },
+    [totalItemsOnCurrentPage, currentPage]
+  )
+
+  const handleColumnSort = useCallback((idColumm: any, sortType: 'asc' | 'desc' | '') => {
+    setSortType(sortType)
+    setSortValue(idColumm)
+    setUpdate((prev) => !prev)
+  }, [])
+
+  useEffect(() => {
+    if (isSetPageURL.current === false) {
+      setCurrentPage(() => pageURL)
+      isSetPageURL.current = true
+    }
+  }, [pageURL])
+
+  useEffect(() => {
+    setLoading(true)
+    const params = {
+      page: currentPage,
+      search: searchText,
+      order: sortType && sortValue ? `${sortValue}:${sortType}` : ''
+    }
+
+    removeEmptyFields(params)
+
+    navigate({
+      pathname: location.pathname,
+      search: createSearchParams(JSON.parse(JSON.stringify(params))).toString()
+    })
+
+    getAll({ ...params })
+    setIsAdded(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debounceSearch, navigate, location.pathname, update])
+
+  useEffect(() => {
+    const getStatistics = async () => {
+      try {
+        const response = await DashboardApi.getCardStatistics()
+        const updatedCrawledDates = {
+          bookCrossing: response.data.crawledDays['Book Crossing'][0],
+          goodreads: response.data.crawledDays['GoodReads'][0],
+          thriftBooks: response.data.crawledDays['Thrift Books'][0]
+        }
+        setLatestDate(convertDateFormat(updatedCrawledDates.goodreads))
+      } catch (err) {
+        console.log(err)
+      }
+    }
+    getStatistics()
+  }, [])
+
+  return (
+    <>
+      <Box sx={{ backgroundColor: 'white', padding: '1rem', borderRadius: '1rem', marginTop: '1rem' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '0.25rem',
+            flexWrap: 'wrap'
+          }}
+        >
+          <Box sx={{ alignSelf: 'flex-start', marginBottom: '10px' }}>
+            <Box sx={{ textAlign: 'center', paddingTop: '1rem', display: 'flex', alignItems: 'center' }}>
+              <Typography variant="caption" paddingLeft={'1rem'}>
+                Last updated on {latestDate.length > 0 ? latestDate : ''}.
+              </Typography>
+            </Box>
+          </Box>
+          <Box sx={{ display: 'flex', alignSelf: 'flex-end', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <Input
+              label="Search"
+              id="outlined-search"
+              placeholder="Search here..."
+              handleChange={(e) => {
+                setCurrentPage(1)
+                setSearchText(e.target.value)
+              }}
+              value={searchText}
+            />
+          </Box>
+        </Box>
+        <CommonDeleteDialog
+          onOpen={isDeleteDialogOpen}
+          onClose={() => {
+            setIsDeleteDialogOpen(false)
+          }}
+          onDelete={() => deleteBook(deleteRowData)}
+          title={'Delete book'}
+          message={warningMessage}
+          deleteBtnText="Yes, delete"
+        />
+
+        <ReusableTable
+          columns={columns}
+          rows={books}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          handleColumnSort={handleColumnSort}
+          total={totalBooks}
+          handlePageSearch={pageSearch}
+          totalItemsOnCurrentPage={totalItemsOnCurrentPage}
+          loading={loading}
+          isAdded={isAdded}
+        />
+      </Box>
+    </>
+  )
 }
 
 export default withBaseLogic(BookLayout)
