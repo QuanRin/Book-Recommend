@@ -157,7 +157,128 @@ const UserLayout = ({ navigate, location }: any) => {
     }
   }, [])
 
+  const deleteUser = useCallback(
+    async (rowData?: { [key: string]: any }) => {
+      try {
+        if (rowData) {
+          const { id } = rowData
+          await UserApi.deleteUserById(id)
+          toast.success('An user is deleted successfully!')
+          if (totalItemsOnCurrentPage === 1 && currentPage > 1) {
+            setCurrentPage((prevPage) => prevPage - 1)
+          }
+          setUpdate((prev) => !prev)
+          setIsDeleteDialogOpen(false)
+        }
+      } catch (err: any) {
+        toast.error(err?.message)
+      }
+    },
+    [totalItemsOnCurrentPage, currentPage]
+  )
 
+  const handleColumnSort = useCallback((idColumm: any, sortType: 'asc' | 'desc' | '') => {
+    setSortType(sortType)
+    setSortValue(idColumm)
+    setUpdate((prev) => !prev)
+  }, [])
+
+  useEffect(() => {
+    if (isSetPageURL.current === false) {
+      setCurrentPage(() => pageURL)
+      isSetPageURL.current = true
+    }
+  }, [pageURL])
+
+  useEffect(() => {
+    setLoading(true)
+    const params = {
+      page: currentPage,
+      search: searchText,
+      order: sortType && sortValue ? `${sortValue}:${sortType}` : ''
+    }
+
+    removeEmptyFields(params)
+
+    navigate({
+      pathname: location.pathname,
+      search: createSearchParams(JSON.parse(JSON.stringify(params))).toString()
+    })
+
+    getAll({ ...params })
+    setIsAdded(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, debounceSearch, sortType, sortValue, update, pageURL])
+
+  return (
+    <Box sx={{ backgroundColor: 'white', padding: '1rem', borderRadius: '1rem', marginTop: '1rem' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '0.25rem',
+          flexWrap: 'wrap'
+        }}
+      >
+        <Box sx={{ alignSelf: 'flex-start', marginBottom: '10px' }}>
+          <DialogAddUser
+            onAdd={() => {
+              setIsAdded(true)
+              setSortType('')
+              setSearchText('')
+              setCurrentPage(1)
+              setUpdate((prev) => !prev)
+            }}
+          />
+        </Box>
+        <Box sx={{ alignSelf: 'flex-end' }}>
+          <Input
+            label="Search"
+            id="outlined-search"
+            placeholder="Search here..."
+            handleChange={(e) => {
+              setCurrentPage(1)
+              setSearchText(e.target.value)
+            }}
+            value={searchText}
+          />
+        </Box>
+      </Box>
+      <DialogEditUser
+        selectedUser={selectedUser}
+        onOpen={isEditDialogOpen}
+        onClose={() => {
+          setIsEditDialogOpen(false)
+        }}
+        onUpdate={() => {
+          setUpdate((prev) => !prev)
+        }}
+      />
+      <CommonDeleteDialog
+        onOpen={isDeleteDialogOpen}
+        onClose={() => {
+          setIsDeleteDialogOpen(false)
+        }}
+        onDelete={() => deleteUser(deleteRowData)}
+        title={'Delete user'}
+        message={warningMessage}
+        deleteBtnText="Yes, delete"
+      />
+      <ReusableTable
+        columns={columns}
+        rows={users}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        handleColumnSort={handleColumnSort}
+        total={totalUsers}
+        handlePageSearch={pageSearch}
+        totalItemsOnCurrentPage={totalItemsOnCurrentPage}
+        loading={loading}
+        isAdded={isAdded}
+      />
+    </Box>
+  )
 }
 
 export default withBaseLogic(UserLayout)
