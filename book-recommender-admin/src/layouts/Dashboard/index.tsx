@@ -343,7 +343,75 @@ const DashboardLayout = () => {
             />
           </Box>
         </Grid>
-       
+        <Grid item xs={12} md={6} lg={2}></Grid>
+        <Grid item xs={12} md={6} lg={3}>
+          <Box>
+            <Typography variant="body1" mb={0.5} textAlign={'center'}>
+              Book Distribution by sources
+            </Typography>
+            <Pie
+              className=""
+              data={{
+                labels: ['Book Crossing', 'Thrift Books', 'Goodreads'],
+                datasets: [
+                  {
+                    label: 'Total: ',
+                    data: [numberOfBooks.bookCrossing, numberOfBooks.thriftBooks, numberOfBooks.goodreads],
+                    backgroundColor: ['#5C88C4', '#6FDCE3', '#FFFDB5'],
+                    borderWidth: 0,
+                    hoverBackgroundColor: ['#5C88C4', '#6FDCE3', '#FFFDB5']
+                  }
+                ]
+              }}
+            />
+          </Box>
+        </Grid>
+        <Grid item xs={12} md={6} lg={2}></Grid>
+
+        <Grid item xs={12} md={6} lg={3}>
+          <Box>
+            <Typography variant="body1" mb={0.5} textAlign={'center'}>
+              User Distribution by genders
+            </Typography>
+            <Pie
+              className=""
+              data={{
+                labels: ['Male', 'Female', 'Other'],
+                datasets: [
+                  {
+                    label: 'Total: ',
+                    data: [numberOfGenders.male, numberOfGenders.female, numberOfGenders.other],
+                    backgroundColor: ['#78ABA8', '#EF9C66', '#C8CFA0'],
+                    borderWidth: 0,
+                    hoverBackgroundColor: ['#78ABA8', '#EF9C66', '#C8CFA0']
+                  }
+                ]
+              }}
+            />
+          </Box>
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={3} my={0}>
+        <Grid item md={12}>
+          <Box sx={{ backgroundColor: 'white', padding: '1rem', borderRadius: '1rem' }}>
+            <Typography variant="button" mb={0.5}>
+              Top 5 books with the highest ratings
+            </Typography>
+            <DashboardTable columns={columns} rows={topRatedBooks} loading={loading.topRatedBooks} />
+          </Box>
+        </Grid>
+        <Grid item md={12}>
+          <Box sx={{ backgroundColor: 'white', padding: '1rem', borderRadius: '1rem' }}>
+            <Typography variant="button" mb={0.5}>
+              Top 5 books with the most ratings
+            </Typography>
+            <DashboardTable columns={columns} rows={mostRatedBooks} loading={loading.mostRatedBooks} />
+          </Box>
+        </Grid>
+      </Grid>
+    </>
+  )
 }
 
 export default DashboardLayout
